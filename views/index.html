@@ -1,11 +1,86 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
-  </body>
+<html ng-app="app">
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>待办事项</title>
+    <link rel='stylesheet' href='/lib/bootstrap/dist/css/bootstrap.css'/>
+</head>
+<body ng-controller="myController" class="container">
+<div class="panel panel-default">
+    <div class="panel-heading alert alert-success">{{title}}</div>
+    <button class="btn btn-success" ng-click="query()">查询</button>
+    <div class="panel-body">
+        <table class="table" ng-if="workList.length>0">
+            <thead>
+            <tr>
+                <th></th>
+                <th>事情</th>
+                <th>创建时间</th>
+                <th>是否已做</th>
+
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="o in workList">
+                <td><input type="checkbox"/></td>
+                <td>{{o.name}}</td>
+                <td>{{o.createTime.toLocaleString() | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+                <td><span class="glyphicon" ng-class="{'glyphicon-ok':o.isDo}"></span></td>
+            </tr>
+            </tbody>
+        </table>
+        <form class="form-group">
+            <label><input type="text" ng-model="work.name"></label>
+            <button class="btn btn-default" type="button" ng-click="add()">保存</button>
+        </form>
+    </div>
+
+</div>
+
+</body>
+<script src="/lib/jquery/dist/jquery.js"></script>
+<script src="/lib/bootstrap/dist/js/bootstrap.js"></script>
+<script src="/lib/angular/angular.js"></script>
+<script src="/lib/angular-route/angular-route.js"></script>
+<script>
+    var app = angular.module('app', []);
+    app.factory('toDoService', function ($http) {
+        var baseUrl = function () {
+          return '/work'
+        };
+        return {
+            query: function () {
+                return $http.get(baseUrl()).then(function (res) {
+                    return res.data
+                })
+            },
+            add:function (data) {
+                return $http.post(baseUrl()+'/add',data).then(function (res) {
+                    return res.data
+                })
+            }
+        }
+    });
+    app.controller('myController', function ($scope, toDoService) {
+        $scope.title = '待办事项';
+        $scope.workList=[];
+        $scope.work={};
+        $scope.query = function () {
+            toDoService.query().then(function (data) {
+
+                if(data.success){
+                    $scope.workList=data.info;
+                }
+            })
+        };
+        $scope.add=function () {
+            toDoService.add($scope.work).then(function (data) {
+                if(data.success){
+                    $scope.workList.push(data.info);
+                    $scope.work={};
+                }
+            })
+        }
+    })
+</script>
 </html>
